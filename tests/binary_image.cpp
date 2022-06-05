@@ -40,10 +40,36 @@ namespace BI
         EXPECT_EQ(true, ebpix == BytePixels(0b00000000));
     };
 
-    TEST(DecodeJpeg, test)
+    TEST(BinaryMap, dump)
     {
-        Bitmap *bitmap = new Bitmap;
-        std::string filename = "./opencv_sample/home.jpg";
-        bitmap->import_image(filename);
+        int16_t w = 4;
+        int16_t h = 6;
+        int16_t comp_type = 0;
+        int16_t size = 0;
+        BinaryMapHeader *header = new BinaryMapHeader(w, h, comp_type, size);
+
+        size_t nbyte = std::ceil(w * h * 0.125);
+        BytePixels **data = new BytePixels *[nbyte];
+        for (int i = 0; i < nbyte; i++)
+        {
+            data[i] = new BytePixels();
         }
+        BinaryMap *bim = new BinaryMap(header, data);
+
+        std::string filename = "./sample/test.bim";
+        bim->dump(filename);
+    };
+    TEST(read_binary_map, test_bim)
+    {
+        std::string filename = "./sample/test.bim";
+        BinaryMap *new_bim = new BinaryMap;
+        read_binary_map(filename, new_bim);
+
+        BinaryMapHeader *golden = new BinaryMapHeader(4, 6, 0, 0);
+        EXPECT_EQ(*(new_bim->header_) == *golden, true);
+        for (int i = 0; i < new_bim->number_of_byte(); i++)
+        {
+            EXPECT_EQ(new_bim->data_[i]->byte, 0);
+        }
+    };
 };

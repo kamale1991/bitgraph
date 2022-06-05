@@ -10,6 +10,7 @@
  */
 
 #include "include/binary_image.h"
+#include <fstream>
 
 namespace BI
 {
@@ -47,6 +48,19 @@ namespace BI
         return os;
     }
 
+    void BinaryMapHeader::operator=(const BinaryMapHeader &rhs)
+    {
+        width = rhs.width;
+        height = rhs.height;
+        compression_type = rhs.compression_type;
+        data_size_after_compression = rhs.data_size_after_compression;
+    }
+
+    bool BinaryMapHeader::operator==(const BinaryMapHeader &rhs)
+    {
+        return ((width == rhs.width) && (height == rhs.height) && (compression_type == rhs.compression_type) && (data_size_after_compression == rhs.data_size_after_compression));
+    };
+
     void Bitmap::import_image(std::string filename)
     {
         cv::Mat original_image;
@@ -54,6 +68,106 @@ namespace BI
         this->width = original_image.size().width;
         this->height = original_image.size().height;
         this->ch = original_image.channels();
-        this->data = original_image.data;
+        this->data = (unsigned char *)original_image.data;
+    };
+
+    void BinaryMap::new_header()
+    {
+        delete header_;
+        header_ = new BinaryMapHeader;
+        assert(header_);
+    };
+
+    void BinaryMap::allocate(int nbyte)
+    {
+        delete data_;
+        data_ = new BytePixels *[nbyte];
+        assert(data_);
+    };
+
+    void BinaryMap::dump(std::string bim_filename)
+    {
+        std::ofstream ofs;
+        ofs.open(bim_filename.c_str(), std::ios::trunc | std::ios::binary);
+        if (!ofs)
+        {
+            return;
+        };
+
+        char *tmp;
+
+        // Write header_
+        tmp = (char *)&(header_->width);
+        ofs.write(tmp, 2);
+        tmp = (char *)&(header_->height);
+        ofs.write(tmp, 2);
+        tmp = (char *)&(header_->compression_type);
+        ofs.write(tmp, 2);
+        tmp = (char *)&(header_->data_size_after_compression);
+        ofs.write(tmp, 2);
+
+        // Write data
+        int nbyte = number_of_byte();
+        for (int i = 0; i < nbyte; i++)
+        {
+            tmp = (char *)&(data_[i]->byte);
+            ofs.write(tmp, 1);
+        };
+        ofs.flush();
+        ofs.close();
+    };
+
+    int BinaryMap::number_of_byte()
+    {
+        return std::ceil(header_->width * header_->height * 0.125);
+    };
+
+    void BinaryMap::shallow_copy(BinaryMapHeader *header_in, BytePixels **data_in)
+    {
+        this->header_ = header_in;
+        this->data_ = data_in;
+    };
+
+    void BinaryMap::show_head()
+    {
+        std::cout << "width = " << this->header_->width << " ";
+        std::cout << "height = " << this->header_->height << std::endl;
+        std::cout << "compression type = " << this->header_->compression_type << " data_size_after_compression = " << this->header_->data_size_after_compression << std::endl;
+    };
+
+    void BinaryMap::show_data()
+    {
+        int nbyte = this->number_of_byte();
+        for (int i = 0; i < nbyte; i++)
+        {
+            std::cout << *data_[i] << std::endl;
+        }
+    };
+
+    void read_binary_map(std::string bim_filename, BinaryMap *out)
+    {
+        std::ifstream ifs(bim_filename.c_str(), std::ios::in | std::ios::binary);
+        if (!ifs)
+        {
+
+            return;
+        }
+        char *tmp1 = new char[1];
+        char *tmp2 = new char[2];
+        char *tmp8 = new char[8];
+        out->new_header();
+
+        ifs.read(tmp8, 8);
+        out->header_ = (BinaryMapHeader *)tmp8;
+
+        int nbyte = out->number_of_byte();
+        out->allocate(nbyte);
+        for (int i = 0; i < nbyte; i++)
+        {
+            ifs.read(tmp1, 1);
+            out->data_[i] = new BytePixels(static_cast<int8_t>(*tmp1));
+        }
+
+        ifs.close();
     };
 };

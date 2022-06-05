@@ -31,6 +31,7 @@ namespace BI
             byte = 0b00000000;
         };
         BytePixels(int8_t input_byte) : byte(input_byte){};
+        int8_t byte;
 
         void set(int8_t index, int8_t sw)
         {
@@ -58,7 +59,6 @@ namespace BI
         {
             return this->byte & (1 << index);
         };
-        int8_t byte;
 
         bool operator==(const BytePixels &rhs)
         {
@@ -79,13 +79,48 @@ namespace BI
         void import_image(std::string filename);
     };
 
-    // int DecodeJpeg(Bitmap *bitmap, std::string filename);
-    // int EncodeJpeg(Bitmap *bitmap, std::string filename);
-
-    class BinaryImage
+    struct BinaryMapHeader
     {
-        BytePixels *data;
+        int16_t width;
+        int16_t height;
+        // 0: No compression
+        int16_t compression_type;
+        int16_t data_size_after_compression;
+        BinaryMapHeader(){};
+        BinaryMapHeader(int16_t w, int16_t h, int16_t comp_type, int16_t size) : width(w), height(h), compression_type(comp_type), data_size_after_compression(size){};
+        BinaryMapHeader(BinaryMapHeader *header)
+        {
+            this->width = header->width;
+            this->height = header->height;
+            this->compression_type = header->compression_type;
+            this->data_size_after_compression = header->data_size_after_compression;
+        };
+        void operator=(const BinaryMapHeader &rhs);
+        bool operator==(const BinaryMapHeader &rhs);
     };
+
+    class BinaryMap
+    {
+    public:
+        // Header
+        BinaryMapHeader *header_;
+        // Data
+        BytePixels **data_;
+
+        BinaryMap(){};
+        BinaryMap(BinaryMapHeader *header_in, BytePixels **data_in) : header_(header_in), data_(data_in){};
+        BinaryMap(cv::Mat *cv_mat){};
+        BinaryMap(Bitmap *bitmap){};
+
+        void new_header();
+        void allocate(int nbyte);
+        void dump(std::string bim_filename);
+        int number_of_byte();
+        void shallow_copy(BinaryMapHeader *header_in, BytePixels **data_in);
+        void show_head();
+        void show_data();
+    };
+    void read_binary_map(std::string bim_filename, BinaryMap *out);
 };
 
 #endif
