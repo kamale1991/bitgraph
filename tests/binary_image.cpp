@@ -45,8 +45,5 @@ namespace BI
         Bitmap *bitmap = new Bitmap;
         std::string filename = "./opencv_sample/home.jpg";
         bitmap->import_image(filename);
-        // DecodeJpeg(bitmap, filename);
-        // bitmap->show_head();
-        // bitmap->show_data();
-    }
+        }
 };
