@@ -107,10 +107,14 @@ namespace BI
         // Data
         BytePixels **data_;
 
+        // orientation: 0
+        int orientation = 0;
+
         BinaryMap(){};
         BinaryMap(BinaryMapHeader *header_in, BytePixels **data_in) : header_(header_in), data_(data_in){};
         BinaryMap(cv::Mat *cv_mat){};
         BinaryMap(Bitmap *bitmap){};
+        BinaryMap(int16_t width, int16_t height, int8_t *data);
 
         void new_header();
         void allocate(int nbyte);
@@ -119,6 +123,8 @@ namespace BI
         void shallow_copy(BinaryMapHeader *header_in, BytePixels **data_in);
         void show_head();
         void show_data();
+
+        int8_t get_bit(int ix, int iy);
     };
     void read_binary_map(std::string bim_filename, BinaryMap *out);
 };

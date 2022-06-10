@@ -71,16 +71,40 @@ namespace BI
         this->data = (unsigned char *)original_image.data;
     };
 
+    BinaryMap::BinaryMap(int16_t width, int16_t height, int8_t *data)
+    {
+        new_header();
+        int nbyte = width * height;
+        allocate(nbyte);
+        int index;
+        int countor = 0;
+        int i_byte = 0;
+        int i_bit = 0;
+        for (int iy = 0; iy < height; iy++)
+        {
+            for (int ix = 0; ix < width; ix++)
+            {
+                std::cout << i_byte << " " << i_bit << " " << data[i_bit] << std::endl;
+                data_[i_byte]->set(i_bit, data[i_bit]);
+                countor++;
+                i_bit++;
+                if (countor == 8)
+                {
+                    i_byte++;
+                    i_bit = 0;
+                }
+            }
+        }
+    };
+
     void BinaryMap::new_header()
     {
-        delete header_;
         header_ = new BinaryMapHeader;
         assert(header_);
     };
 
     void BinaryMap::allocate(int nbyte)
     {
-        delete data_;
         data_ = new BytePixels *[nbyte];
         assert(data_);
     };
@@ -169,5 +193,13 @@ namespace BI
         }
 
         ifs.close();
+    };
+
+    int8_t BinaryMap::get_bit(int ix, int iy)
+    {
+        int index = ix + header_->width * iy;
+        int i_byte = std::floor(index * 0.125);
+        int i_bit = index % 8;
+        return data_[i_byte]->get(i_bit);
     };
 };

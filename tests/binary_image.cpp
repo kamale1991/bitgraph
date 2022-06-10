@@ -59,6 +59,29 @@ namespace BI
         std::string filename = "./sample/test.bim";
         bim->dump(filename);
     };
+
+    TEST(BinaryMap, constructor_int8_array)
+    {
+        int16_t w = 3;
+        int16_t h = 5;
+        int8_t *data = new int8_t[15];
+        for (int i = 0; i < 15; i++)
+        {
+            if (i % 3 == 0)
+            {
+                data[i] = 1;
+            }
+            else
+            {
+                data[i] = 0;
+            }
+        }
+        std::cout << data[0] << std::endl;
+        BinaryMap *bim = new BinaryMap(w, h, data);
+        bim->show_head();
+        bim->show_data();
+    };
+
     TEST(read_binary_map, test_bim)
     {
         std::string filename = "./sample/test.bim";
